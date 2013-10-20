@@ -2,12 +2,26 @@
 #-*- coding: utf-8 -*-
 
 __author__ = 'zld'
-
+import json
 from geventwebsocket import WebSocketError
 import bottle
-from bottle import request, Bottle, abort, template
+from bottle import request, response, Bottle, abort, template
 from modules.logic import Messenger
 from modules import control
+import gevent
+from bottle import view
+from bottle import static_file
+from modules.logic import EventDispatcher
+
+def log_request(self):
+    log = self.server.log
+    if log:
+        if hasattr(log, "info"):
+            log.info(self.format_request() + '\n')
+        else:
+            log.write(self.format_request() + '\n')
+
+gevent.pywsgi.WSGIHandler.log_request = log_request
 
 bottle.TEMPLATE_PATH.insert(0, 'templates')
 app = Bottle()
@@ -17,23 +31,36 @@ def handle_websocket():
     wsock = request.environ.get('wsgi.websocket')
     if not wsock:
         abort(400, 'Expected WebSocket request.')
-    user = request.forms.getall('user')
-    print "asdfa"
 
+    user = request.get_cookie("user")
     control.GameChannelsControl.activate_channel(user)
-    messenger = Messenger(user)
+    dispatcher = EventDispatcher(user)
+
+    print "user {0} come".format(user)
+
     while True:
         try:
             message = wsock.receive()
             if message:
-                messenger.send_to(message)
-            response = messenger.listen()
+                message = json.loads(message)
+
+            response = dispatcher.do(message)
             if response:
                 wsock.send(response)
+
         except WebSocketError:
-            break
+            raise
+        finally:
+            control.GameChannelsControl.deactivate_channel(user)
 
 @app.route('/main')
+@view('home.tpl')
 def render_template():
-    return template('home.tpl')
+    user = request.GET.get('user')
+    response.set_header("Set-Cookie", 'user={0}'.format(user))
+    print user
+    return dict()
 
+@app.route('/static/<filepath:path>')
+def handle_static(filepath):
+    return static_file(filepath, './static')

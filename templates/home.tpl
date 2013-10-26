@@ -5,7 +5,9 @@
         <script type="text/javascript" src="/static/js/jquery.json-2.4.min.js"> </script>
         <script type="text/javascript" src="/static/client/app.js"></script>
         <script type="text/javascript" src="/static/client/dispatcher.js"></script>
-        <script type="text/javascript">
+        <script type="text/javascript" src="/static/client/app.js"> </script>
+        <script type="text/javascript" src="/static/client/draw.js"> </script>
+<!--        <script type="text/javascript">
             $(document).ready(function(){
                 var ws = new WebSocket("ws://127.0.0.1:8000/websocket");
               //  ws.onopen = function() {
@@ -24,8 +26,27 @@
             });
             app();
         </script>
-</head>
+-->
+        <style>
+            #GameScene {
+                margin: 10% auto;
+                width: 760px;
+                height: 1000px;
+            }
 
-    <div id="messages"></div>
+            #GameField {
+                width: 760px;
+                height: 600px;
+                border:1px solid #000000;
+                background-color: lightgrey;
+                display: block;
+            }
+        </style>
 
+   </head>
+   <body>
+        <div id="GameScene">
+            <canvas id="GameField"></canvas>
+        </div>
+   </body>
 </html>

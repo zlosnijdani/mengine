@@ -6,7 +6,7 @@ import json
 from geventwebsocket import WebSocketError
 import bottle
 from bottle import request, response, Bottle, abort, template
-from modules.logic import Messenger
+from modules import logic
 from modules import control
 import gevent
 from bottle import view
@@ -35,23 +35,32 @@ def handle_websocket():
     user = request.get_cookie("user")
     control.GameChannelsControl.activate_channel(user)
     dispatcher = EventDispatcher(user)
+    listener = logic.Listener(user)
 
     print "user {0} come".format(user)
 
     while True:
         try:
             message = wsock.receive()
+            if message is None:
+                break
+
             if message:
                 message = json.loads(message)
 
-            response = dispatcher.do(message)
+            dispatcher.do(message)
+
+            response = listener.listen()
+
             if response:
                 wsock.send(response)
 
-        except WebSocketError:
-            raise
-        finally:
+        except:
+            print "exception"
             control.GameChannelsControl.deactivate_channel(user)
+            raise
+    print "deactivate"
+    control.GameChannelsControl.deactivate_channel(user)
 
 @app.route('/main')
 @view('home.tpl')

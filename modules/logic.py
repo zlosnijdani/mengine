@@ -6,7 +6,7 @@ __author__ = 'zld'
 from modules.control import GameChannelsControl as control
 
 
-class Messenger(object):
+class Pusher(object):
 
     channeler = control
 
@@ -15,17 +15,20 @@ class Messenger(object):
         self.my_channel = who
 
     def send_to(self, message):
-        print "ACTIVE_CHANNELS {0}".format(self.channeler.active_channels())
-        print "MYCHANNEL {0}".format(self.my_channel)
         opponents_channels = [channel for channel in self.channeler.active_channels() if channel != self.my_channel]
-        print "OPPONENT C>HANNELS {0}".format(opponents_channels)
         if opponents_channels:
             [self.channeler.api.rpush(channel, message) for channel in opponents_channels]
             return True
         return False
 
+
+class Listener(object):
+
+    def __init__(self, who):
+        self.my_channel = who
+
     def listen(self):
-        return self.channeler.api.lpop(self.my_channel)
+        return control.api.lpop(self.my_channel)
 
 
 class EventDispatcher(object):
@@ -39,15 +42,17 @@ class EventDispatcher(object):
         self._user = user
 
     def do(self, event):
-        action = self.registred[event['type']]
-        return action(event)
+        if event:
+            print "event %s" % event
+            action = self.registred[event['type']]
+            return action(event)
 
     def _init(self, event):
         user = event['session_id']
         return {'type': 'init', 'user': user}
 
     def _on_message(self, event):
-        messenger = Messenger(self._user)
+        messenger = Pusher(self._user)
         messenger.send_to(event['message'])
 
     def _close(self, event):

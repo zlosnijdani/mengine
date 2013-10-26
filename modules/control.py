@@ -21,5 +21,5 @@ class GameChannelsControl(object):
 
     @classmethod
     def deactivate_channel(cls, name):
-        cls.api.sadd(cls.active_channels_key, name)
+        cls.api.srem(cls.active_channels_key, name)
 

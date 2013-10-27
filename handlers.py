@@ -46,6 +46,7 @@ def handle_websocket():
                 break
 
             if message:
+                print message
                 message = json.loads(message)
 
             dispatcher.do(message)
@@ -53,6 +54,7 @@ def handle_websocket():
             response = listener.listen()
 
             if response:
+                print response
                 wsock.send(response)
 
         except:

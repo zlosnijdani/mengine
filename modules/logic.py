@@ -36,24 +36,23 @@ class EventDispatcher(object):
     def __init__(self, user):
 
         self.registred = {
-            'message': self._on_message,
-            '_close': self._close,
+            'userConnected': self._user_connected,
+            'userMoved': self._user_moved,
         }
         self._user = user
 
     def do(self, event):
         if event:
-            print "event %s" % event
-            action = self.registred[event['type']]
-            return action(event)
+            event, result = self.registred[event['type']](event)
+            messenger = Pusher(self._user)
+            messenger.send_to(event)
+            if result:
+                return result
 
-    def _init(self, event):
-        user = event['session_id']
-        return {'type': 'init', 'user': user}
+    def _user_connected(self, event):
+        event['id'] = self._user
+        return event, None
 
-    def _on_message(self, event):
-        messenger = Pusher(self._user)
-        messenger.send_to(event['message'])
+    def _user_moved(self, event):
+        return event, None
 
-    def _close(self, event):
-        return

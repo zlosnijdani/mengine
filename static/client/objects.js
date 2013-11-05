@@ -31,7 +31,7 @@ function findPlayer(id, players){
         }
     };
 
-    for (var i; i < players.length; i++){
+    for (var i=0; i < players.length; i++){
         var result = match(players[i]);
         if (result){
             return result;

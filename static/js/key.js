@@ -9,17 +9,15 @@ function preload() {
 
 function create() {
     game.stage.backgroundColor = '#736357';
-    controlled = new User();
 }
 
 function update() {
 
     var moved = function(){
-        var evt = userMoved;
+        var evt = userMovedEvent;
         evt['x'] = controlled.sprite.x;
         evt['y'] = controlled.sprite.y;
         messenger.sendEvent(evt);
-
     };
 
     if (controlled !== null && messenger !== null ){

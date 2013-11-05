@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.js"> </script>
+        <script type="text/javascript" src="/static/js/jquery-1.10.2.min.js"> </script>
         <script type="text/javascript" src="/static/js/jquery.json-2.4.min.js"> </script>
         <script type="text/javascript" src="/static/js/phaser.js"> </script>
         <script type="text/javascript" src="/static/client/app.js"></script>
@@ -28,8 +28,9 @@
 
    </head>
    <body>
-        <button id="join">
+        <button id="join"></button>
         <script type="text/javascript">
+            var user_id = "{{ user_id }}";
             $(document).ready(function(){
                 run();
                 $('#join').click(function(){

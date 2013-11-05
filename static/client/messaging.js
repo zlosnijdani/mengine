@@ -35,12 +35,14 @@ Messenger.prototype = {
     connect : function(){
         this.ws = new WebSocket(this.url);
         var m = this;
+        this.ws.onopen = function(){
+        };
         this.ws.onmessage = function(evt){
             m.dispatcher.do(evt.data);
         };
     },
     sendEvent : function(evt){
-        this.ws.send($.toJSON(evt));
+        this.ws.send(JSON.stringify(evt));
     }
 };
 

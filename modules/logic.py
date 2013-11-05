@@ -1,34 +1,44 @@
 #!/usr/bin/env python                                                                                                                                                                      
 #-*- coding: utf-8 -*-
 
-__author__ = 'zld'
 
 from modules.control import GameChannelsControl as control
+
+ROOM = 'room1'
 
 
 class Pusher(object):
 
-    channeler = control
+    channeller = control
 
-    def __init__(self, who):
-        self.user = who
-        self.my_channel = who
+    def __init__(self, uid, gid):
+        self.room_channel = gid
+        self.user_channel = uid
 
-    def send_to(self, message):
-        opponents_channels = [channel for channel in self.channeler.active_channels() if channel != self.my_channel]
-        if opponents_channels:
-            [self.channeler.api.rpush(channel, message) for channel in opponents_channels]
-            return True
-        return False
+    def _send(self, channel, msg):
+        self.channeller.api.rpush(channel, msg)
+
+    def send_to_room(self, msg):
+        for c in control.active_channels():
+            self._send(c, msg)
+
+    def sent_to_user(self, msg):
+        self._send(self.user_channel, msg)
 
 
 class Listener(object):
 
-    def __init__(self, who):
-        self.my_channel = who
+    def __init__(self, channels=()):
+        if isinstance(channels, tuple):
+            self._channels = channels
+        else:
+            self._channels = [channels]
 
     def listen(self):
-        return control.api.lpop(self.my_channel)
+        msgs = []
+        for channel in self._channels:
+            msgs.append(control.api.lpop(channel))
+        return msgs
 
 
 class EventDispatcher(object):
@@ -41,11 +51,16 @@ class EventDispatcher(object):
         }
         self._user = user
 
+    def _convert(self, d):
+        d = {k: v for k, v in d.items()}
+        return d
+
     def do(self, event):
         if event:
+            event = self._convert(event)
             event, result = self.registred[event['type']](event)
-            messenger = Pusher(self._user)
-            messenger.send_to(event)
+            messenger = Pusher(self._user, ROOM)
+            messenger.send_to_room(event)
             if result:
                 return result
 
@@ -54,5 +69,5 @@ class EventDispatcher(object):
         return event, None
 
     def _user_moved(self, event):
+        event['id'] = self._user
         return event, None
-

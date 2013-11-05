@@ -7,12 +7,12 @@
  */
 
 
-var userMoved = {
-    'type': 'userMoved',
-    'x': 0,
-    'y': 0
+var userMovedEvent = {
+    "type": "userMoved",
+    "x": 0,
+    "y": 0
 };
 
 var connect = {
-    'type': 'userConnected'
+    "type": "userConnected"
 }

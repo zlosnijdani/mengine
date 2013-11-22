@@ -7,12 +7,20 @@
  */
 
 
-var userMovedEvent = {
-    "type": "userMoved",
-    "x": 0,
-    "y": 0
+var userMovedEvent = function(uid) {
+    var evt = {
+        "type": "userMoved",
+        "x": 0,
+        "y": 0
+    };
+    evt['id'] = uid;
+    return evt
 };
 
-var connect = {
-    "type": "userConnected"
-}
+var connect = function(uid) {
+    var evt = {
+        "type": "userConnected"
+    };
+    evt["id"] = uid;
+    return evt
+};

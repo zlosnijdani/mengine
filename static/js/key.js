@@ -14,7 +14,7 @@ function create() {
 function update() {
 
     var moved = function(){
-        var evt = userMovedEvent;
+        var evt = userMovedEvent(user_id);
         evt['x'] = controlled.sprite.x;
         evt['y'] = controlled.sprite.y;
         messenger.sendEvent(evt);

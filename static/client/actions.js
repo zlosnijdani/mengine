@@ -12,7 +12,7 @@ var userConnected = function(evt) {
         controlled = new User();
     }
     else{
-        var obj = Enemy(id);
+        var obj = new Enemy(id);
         opponents.push(obj);
     }
 };

@@ -34,7 +34,7 @@
             $(document).ready(function(){
                 run();
                 $('#join').click(function(){
-                    messenger.sendEvent(connect);
+                    messenger.sendEvent(connect(user_id));
                 })
             });
         </script>

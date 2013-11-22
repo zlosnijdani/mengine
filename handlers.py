@@ -51,61 +51,64 @@ class StateWrapper(object):
 
 @app.route('/websocket')
 def handle_websocket():
+    try:
+        wsock = request.environ.get('wsgi.websocket')
+        if not wsock:
+            abort(400, 'Expected WebSocket request.')
+        user = request.get_cookie("user")
+        room_id = '528e60087f42dd1ed293dc3a'
+        control_c = control.GameChannelsControl(room_id)
+        if room_id:
+            control_c.activate_channel(logic.get_channel_name(room_id, user))
+        print room_id
+        room = logic.Room.create_for(room_id, user)
+        print room
+        print "user {0} come".format(user)
 
-    wsock = request.environ.get('wsgi.websocket')
-    if not wsock:
-        abort(400, 'Expected WebSocket request.')
+        def receive(cstate):
 
-    user = request.get_cookie("user")
-    control.GameChannelsControl.activate_channel(user)
-    dispatcher = EventDispatcher(user)
-    listener = logic.Listener(user)
+            """
+                Receive messages from client (Thread 1)
+            """
 
-    print "user {0} come".format(user)
+            while True:
+                message = wsock.receive()
+                gevent.sleep(0)
+                if message is None:
+                    print 'stop receiving'
+                    print "input %s" % message
+                    cstate.set_raised()
+                    control_c.deactivate_channel(user)
+                    break
 
-    def receive(cstate):
+                if message:
+                    message = json.loads(message)
 
-        """
-            Receive messages from client (Thread 1)
-        """
+                room.user_input(message)
 
-        while True:
-            message = wsock.receive()
-            gevent.sleep(0)
-            if message is None:
-                print 'stop receiving'
-                print "input %s" % message
-                cstate.set_raised()
-                control.GameChannelsControl.deactivate_channel(user)
-                break
+        def send(cstate):
 
-            if message:
-                message = json.loads(message)
+            """
+                Send messages to client (Thread 2)
+            """
 
-            dispatcher.do(message)
+            while True:
+                if cstate.get_state():
+                    print "stop listen"
+                    cstate.reset()
+                    break
+                for response in room.listen():
+                    if response:
+                        print "output message %s" % response
+                        json_event = json.dumps(eval(response))
+                        wsock.send(json_event)
+                gevent.sleep(0)
 
-    def send(cstate):
-
-        """
-            Send messages to client (Thread 2)
-        """
-
-        while True:
-            if cstate.get_state():
-                print "stop listen"
-                cstate.reset()
-                break
-            for response in listener.listen():
-                if response:
-                    print "output message %s" % response
-                    json_event = json.dumps(eval(response))
-                    wsock.send(json_event)
-            gevent.sleep(0)
-
-    obj = gevent.spawn(receive, StateWrapper)
-    obj1 = gevent.spawn(send, StateWrapper)
-    gevent.joinall([obj1, obj])
-
+        obj = gevent.spawn(receive, StateWrapper)
+        obj1 = gevent.spawn(send, StateWrapper)
+        gevent.joinall([obj1, obj])
+    except:
+        raise
 @app.route('/main')
 @view('home.tpl')
 def render_template():
@@ -113,6 +116,15 @@ def render_template():
     response.set_header("Set-Cookie", 'user={0}'.format(user))
     print user
     return dict(user_id=user)
+
+@app.route('/test')
+@view('test.tpl')
+def render_test():
+    return {}
+
+@app.route('/statie/<filepath:path>')
+def handle(filepath):
+    return static_file(filepath, './static')
 
 @app.route('/static/<filepath:path>')
 def handle_static(filepath):

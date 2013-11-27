@@ -88,7 +88,7 @@ class Room(object):
         self.to = {PGroups.all_players: self._to_all,
                    PGroups.enemies: self._to_opponents,
                    PGroups.owner: self._to_owner}
-        self.view = self.ViewClass(id=self.rid)
+        self.view = self.ViewClass.with_id(xid=self.rid)
 
     @classmethod
     def create_for(cls, room_id, uid):
@@ -98,16 +98,8 @@ class Room(object):
             room_id = view.id
         return cls(room_id, uid)
 
-#    @property
-#    def view(self):
-#        view = models.GameView(id=self.rid)
-#        return view
-
     def _opponents(self):
         players = list(self.view.players)
-        print self.view.players
-        print players
-        players.remove(self.uid)
         return players
 
     def _to_all(self, event):
@@ -116,6 +108,7 @@ class Room(object):
     def _to_opponents(self, event):
         print "enemies %s " % self._opponents()
         for enemy in self._opponents():
+            print enemy
             self.pusher.sent_to_user(enemy, event)
 
     def _to_owner(self, event):

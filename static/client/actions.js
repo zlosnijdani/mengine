@@ -23,8 +23,8 @@ var userMoved = function(evt){
     var y = evt["y"];
     var player = findPlayer(id, opponents);
     if (player){
-        player.x = x;
-        player.y = y;
+        player.sprite.x = x;
+        player.sprite.y = y;
     }
 };
 

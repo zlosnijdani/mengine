@@ -56,7 +56,7 @@ def handle_websocket():
         if not wsock:
             abort(400, 'Expected WebSocket request.')
         user = request.get_cookie("user")
-        room_id = '528e60087f42dd1ed293dc3a'
+        room_id = '52964c107f42dd0eea063aca'
         control_c = control.GameChannelsControl(room_id)
         if room_id:
             control_c.activate_channel(logic.get_channel_name(room_id, user))

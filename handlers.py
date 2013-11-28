@@ -28,35 +28,37 @@ bottle.TEMPLATE_PATH.insert(0, 'templates')
 app = Bottle()
 
 
-class StateWrapper(object):
-
-    """
-        Class-wrapper for syncing  two greenlets
-    """
-
-    state = False
-
-    @classmethod
-    def set_raised(cls):
-        cls.state = True
-
-    @classmethod
-    def get_state(cls):
-        return cls.state
-
-    @classmethod
-    def reset(cls):
-        cls.state = False
-
 
 @app.route('/websocket')
 def handle_websocket():
+
+    class StateWrapper(object):
+
+        """
+            Class-wrapper for syncing  two greenlets
+        """
+
+        state = False
+
+        @classmethod
+        def set_raised(cls):
+            cls.state = True
+
+        @classmethod
+        def get_state(cls):
+            return cls.state
+
+        @classmethod
+        def reset(cls):
+            cls.state = False
+
+
     try:
         wsock = request.environ.get('wsgi.websocket')
         if not wsock:
             abort(400, 'Expected WebSocket request.')
         user = request.get_cookie("user")
-        room_id = '52964c107f42dd0eea063aca'
+        room_id = '52972882cc73f424eeb1f67e'
         control_c = control.GameChannelsControl(room_id)
         if room_id:
             control_c.activate_channel(logic.get_channel_name(room_id, user))
@@ -75,16 +77,15 @@ def handle_websocket():
                 message = wsock.receive()
                 gevent.sleep(0)
                 if message is None:
-                    print 'stop receiving'
+                    print 'User %s stop receiving' % user
                     print "input %s" % message
                     cstate.set_raised()
                     control_c.deactivate_channel(user)
                     break
 
-                if message:
+                if message is not None:
                     message = json.loads(message)
-
-                room.user_input(message)
+                    room.user_input(message)
 
         def send(cstate):
 
@@ -94,7 +95,7 @@ def handle_websocket():
 
             while True:
                 if cstate.get_state():
-                    print "stop listen"
+                    print "stop %s listen" % user
                     cstate.reset()
                     break
                 for response in room.listen():

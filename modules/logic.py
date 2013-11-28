@@ -23,6 +23,7 @@ class Pusher(object):
         self.channeler.api.rpush(channel, msg)
 
     def sent_to_room(self, msg):
+        print self.channeler.active_channels
         for c in self.channeler.active_channels:
             self._send(c, msg)
 

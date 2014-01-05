@@ -2,7 +2,8 @@
 
 function preload() {
 
-    game.load.image('phaser', 'static/client/assets/phaser-dude.png');
+    game.load.image('moll', 'static/client/assets/moll.png');
+    game.load.image('ventress', 'static/client/assets/ventress.png');
 
 }
 
@@ -24,23 +25,23 @@ function update() {
 
         if (controlled.upKey.isDown)
         {
-            controlled.sprite.y--;
+            controlled.sprite.y -= 5;
             moved();
         }
         else if (controlled.downKey.isDown)
         {
-            controlled.sprite.y++;
+            controlled.sprite.y += 5;
             moved();
         }
 
         if (controlled.leftKey.isDown)
         {
-            controlled.sprite.x--;
+            controlled.sprite.x -= 5;
             moved();
         }
         else if (controlled.rightKey.isDown)
         {
-            controlled.sprite.x++;
+            controlled.sprite.x += 5;
             moved();
         }
    }

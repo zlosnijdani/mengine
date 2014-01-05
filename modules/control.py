@@ -23,7 +23,7 @@ class GameChannelsControl(object):
 
     def deactivate_channel(self, name):
         self.api.srem(self.key, name)
-        self.clear_channel(name)
+        self.clear_channel("{0}:{1}".format(self.game_id, name))
 
     @classmethod
     def clear_channel(cls, name):

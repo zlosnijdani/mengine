@@ -24,3 +24,9 @@ var connect = function(uid) {
     evt["id"] = uid;
     return evt
 };
+
+var getState = function() {
+    return {
+        "type": "getState"
+    };
+}

@@ -35,6 +35,7 @@
                 run();
                 $('#join').click(function(){
                     messenger.sendEvent(connect(user_id));
+                    messenger.sendEvent(getState());
                 })
             });
         </script>

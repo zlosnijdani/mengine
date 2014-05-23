@@ -9,17 +9,22 @@ from util import ConfiguredRedis
 class GameChannelsControl(object):
 
     api = ConfiguredRedis.instance()
-    active_channels_key = 'mengine:active'
+
+    def __init__(self, game_id):
+        self.game_id = game_id
+        self.key = 'active:%s' % game_id
+
+    @property
+    def active_channels(self):
+        return self.api.smembers(self.key)
+
+    def activate_channel(self, name):
+        self.api.sadd(self.key, name)
+
+    def deactivate_channel(self, name):
+        self.api.srem(self.key, name)
+        self.clear_channel("{0}:{1}".format(self.game_id, name))
 
     @classmethod
-    def active_channels(cls):
-        return cls.api.smembers(cls.active_channels_key)
-
-    @classmethod
-    def activate_channel(cls, name):
-        cls.api.sadd(cls.active_channels_key, name)
-
-    @classmethod
-    def deactivate_channel(cls, name):
-        cls.api.srem(cls.active_channels_key, name)
-
+    def clear_channel(cls, name):
+        cls.api.delete(name)

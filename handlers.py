@@ -2,16 +2,18 @@
 #-*- coding: utf-8 -*-
 
 __author__ = 'zld'
+import gevent
 import json
 from geventwebsocket import WebSocketError
 import bottle
 from bottle import request, response, Bottle, abort, template
 from modules import logic
 from modules import control
-import gevent
 from bottle import view
 from bottle import static_file
-from modules.logic import EventDispatcher
+from gevent import monkey
+
+monkey.patch_all()
 
 def log_request(self):
     log = self.server.log
@@ -28,47 +30,66 @@ app = Bottle()
 
 @app.route('/websocket')
 def handle_websocket():
-    wsock = request.environ.get('wsgi.websocket')
-    if not wsock:
-        abort(400, 'Expected WebSocket request.')
+    try:
+        wsock = request.environ.get('wsgi.websocket')
+        if not wsock:
+            abort(400, 'Expected WebSocket request.')
+        user = request.get_cookie("user")
+        room_id = '529f718c7f42dd3c9af7ba23'
+        control_c = control.GameChannelsControl(room_id)
+        if room_id:
+            control_c.activate_channel(logic.get_channel_name(room_id, user))
+        room = logic.Room.create_for(room_id, user)
 
-    user = request.get_cookie("user")
-    control.GameChannelsControl.activate_channel(user)
-    dispatcher = EventDispatcher(user)
-    listener = logic.Listener(user)
+        def receive():
 
-    print "user {0} come".format(user)
+            """
+                Receive messages from client (Thread 1)
+            """
 
-    while True:
-        try:
-            message = wsock.receive()
-            if message is None:
-                break
+            while True:
+                message = wsock.receive()
+#                gevent.sleep(0)
+                if message is None:
+                    control_c.deactivate_channel(user)
+                    if user in room.active_players:
+                        room.user_input({'type': 'userDisconnected', 'id': user})
+                    room.user_input({'type': 'system', 'message': 'stopListen'})
+                    gevent.sleep(2)
+                    break
 
-            if message:
-                message = json.loads(message)
+                if message is not None:
+                    message = json.loads(message)
+                    room.user_input(message)
 
-            dispatcher.do(message)
+        def send():
 
-            response = listener.listen()
+            """
+                Send messages to client (Thread 2)
+            """
 
-            if response:
-                wsock.send(response)
+            while True:
+                for response in room.listen():
+                    if response:
+                        e = eval(response)
+                        if e['type'] == 'system' and e['message'] == 'stopListen':
+                            return
+                        json_event = json.dumps(eval(response))
+                        wsock.send(json_event)
+#               gevent.sleep(0)
 
-        except:
-            print "exception"
-            control.GameChannelsControl.deactivate_channel(user)
-            raise
-    print "deactivate"
-    control.GameChannelsControl.deactivate_channel(user)
+        obj = gevent.spawn(receive)
+        obj1 = gevent.spawn(send)
+        gevent.joinall([obj1, obj])
+    except:
+        raise
 
 @app.route('/main')
 @view('home.tpl')
 def render_template():
     user = request.GET.get('user')
     response.set_header("Set-Cookie", 'user={0}'.format(user))
-    print user
-    return dict()
+    return dict(user_id=user)
 
 @app.route('/static/<filepath:path>')
 def handle_static(filepath):

@@ -12,7 +12,7 @@ def auto_reload(method):
         try:
             self.reload()
         except AttributeError:
-            raise
+            pass
         return method(self, *args, **kwargs)
     return wrapped
 
@@ -111,7 +111,7 @@ class RoomView(Document):
                 return p
 
 
-if __name__ == "__main__":
-    v = RoomView()
-    v.save()
-    v.reload()
+#if __name__ == "__main__":
+#    v = RoomView()
+#    v.save()
+#    v.reload()

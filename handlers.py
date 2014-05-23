@@ -11,7 +11,9 @@ from modules import logic
 from modules import control
 from bottle import view
 from bottle import static_file
+from gevent import monkey
 
+monkey.patch_all()
 
 def log_request(self):
     log = self.server.log

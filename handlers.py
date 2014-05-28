@@ -32,35 +32,18 @@ app = Bottle()
 def handle_websocket():
     try:
         wsock = request.environ.get('wsgi.websocket')
+
         if not wsock:
             abort(400, 'Expected WebSocket request.')
+
         user = request.get_cookie("user")
         room_id = '529f718c7f42dd3c9af7ba23'
         control_c = control.GameChannelsControl(room_id)
+
         if room_id:
             control_c.activate_channel(logic.get_channel_name(room_id, user))
+
         room = logic.Room.create_for(room_id, user)
-
-        def receive():
-
-            """
-                Receive messages from client (Thread 1)
-            """
-
-            while True:
-                message = wsock.receive()
-#                gevent.sleep(0)
-                if message is None:
-                    control_c.deactivate_channel(user)
-                    if user in room.active_players:
-                        room.user_input({'type': 'userDisconnected', 'id': user})
-                    room.user_input({'type': 'system', 'message': 'stopListen'})
-                    gevent.sleep(2)
-                    break
-
-                if message is not None:
-                    message = json.loads(message)
-                    room.user_input(message)
 
         def send():
 
@@ -71,16 +54,17 @@ def handle_websocket():
             while True:
                 for response in room.listen():
                     if response:
-                        e = eval(response)
-                        if e['type'] == 'system' and e['message'] == 'stopListen':
-                            return
                         json_event = json.dumps(eval(response))
                         wsock.send(json_event)
-#               gevent.sleep(0)
 
-        obj = gevent.spawn(receive)
-        obj1 = gevent.spawn(send)
-        gevent.joinall([obj1, obj])
+        while True:
+            message = wsock.receive()
+
+            if message is None:
+                break
+            else:
+                message = json.loads(message)
+                room.user_input(message)
     except:
         raise
 

@@ -3,7 +3,7 @@
 
 import gevent
 
-from base.serializers import JSONSerializer
+from serializers import JSONSerializer
 
 
 class WebSocketHandler(object):

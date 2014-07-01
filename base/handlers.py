@@ -17,10 +17,10 @@ class WebSocketHandler(object):
     def close(self):
         self.ws.close()
 
-    def loads(self, msg):
+    def deserialize(self, msg):
         return self.serializer.loads(msg)
 
-    def dumps(self, msg):
+    def serialize(self, msg):
         return self.serializer.dumps(msg)
 
     def send(self, msg):
@@ -28,21 +28,20 @@ class WebSocketHandler(object):
         """
             write serealized message to sock
         """
-        self.ws.send(self.dumps(msg))
+        self.ws.send(self.serialize(msg))
 
     def receive(self):
 
         """
             return deserealized message from client
         """
-        return self.loads(self.ws.receive())
+        return self.deserialize(self.ws.receive())
 
     def _handle_send(self, handler):
 
         """
             expects that handler is generator function
         """
-        print handler
 
         for msg in handler():
             self.send(msg)
@@ -54,7 +53,6 @@ class WebSocketHandler(object):
         """
 
         while True:
-            print "ITERATION"
             in_msg = self.receive()
 
             print in_msg
